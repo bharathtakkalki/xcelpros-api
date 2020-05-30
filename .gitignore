@@ -1,0 +1,7 @@
+node_modules
+.DS_Store
+dist/
+dist/index.js
+dist/index.js.map
+dist/config/index.js
+dist/config/index.js.map
