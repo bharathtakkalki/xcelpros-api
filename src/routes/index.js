@@ -15,13 +15,15 @@ initializeDB(db => {
 
     router.use(middleware())
 
-
     //api routes v1
     router.use('/user',userController())
     //error handling route
     router.use((err,req,res,next)=>{
-        console.log("iam in error handler")
-         res.json(err);
+        if(err.statusCode){
+            res.status(err.statusCode).json(err.json);
+        }else{
+            res.json(err);
+        }
     });
 
 
