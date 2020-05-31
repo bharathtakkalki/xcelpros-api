@@ -10,6 +10,20 @@ import UserAuth from '../model/userAuth';
 export default () => {
     let api = Router()
 
+    api.get('/', authenticateToken,checkLoggedOut ,(req, res, next) => {
+        User.find().select('id firstName lastName email phoneNo onlineStatus imgUrl')
+            .then(user => {
+
+                res.status(200).json(user);
+            })
+            .catch(err => {
+                if (!err.statusCode) {
+                    err.statusCode = 500
+                }
+                next(err)
+            })
+    })
+
     api.post('/register', (req, res, next) => {
         bcrypt.hash(req.body.password, 12).then(hashedPassword => {
             const user = new User({
@@ -70,19 +84,35 @@ export default () => {
 
     }, generateAccessToken, respond)
 
-    api.get('/', authenticateToken,checkLoggedOut ,(req, res, next) => {
-        User.find().select('id firstName lastName email phoneNo onlineStatus')
-            .then(user => {
+    api.get('/logout', authenticateToken,checkLoggedOut,(req, res) => {
+        UserAuth.findOneAndUpdate({accessToken:req.get('Authorization').split(' ')[1]},{logoutAt:new Date()},{new:true})
+        .then(userAuth => {
+            res.status(200).json('successfully logged out');
+        })
+        .catch(err => {
+            if (!err.statusCode) {
+                console.log(err)
+                err.statusCode = 500
+            }
+            next(err)
+        })
 
-                res.status(200).json(user);
-            })
-            .catch(err => {
-                if (!err.statusCode) {
-                    err.statusCode = 500
-                }
-                next(err)
-            })
+    });
+
+    api.get('/:id',authenticateToken,checkLoggedOut,(req,res,next)=>{
+        User.findOne({ _id: req.params.id}).select('id firstName lastName email phoneNo onlineStatus imgUrl')
+        .then(user =>{
+            res.status(200).json(user);
+        })
+        .catch(err => {
+            if (!err.statusCode) {
+                err.statusCode = 500
+            }
+            next(err)
+        })
     })
+
+
 
     api.put('/:id', authenticateToken,checkLoggedOut,(req, res, next) => {
         User.findOneAndUpdate(req.params.id, req.body, { new: true, fields: 'uuid firstName lastName email phoneNo onlineStatus' })
@@ -98,20 +128,7 @@ export default () => {
             })
     })
 
-    api.get('/logout', authenticateToken,checkLoggedOut,(req, res) => {
-        UserAuth.findOneAndUpdate({user:req.user.uuid},{logoutAt:new Date()},{new:true})
-        .then(userAuth => {
-            res.status(200).json('successfully logged out');
-        })
-        .catch(err => {
-            if (!err.statusCode) {
-                console.log(err)
-                err.statusCode = 500
-            }
-            next(err)
-        })
 
-    });
 
     api.delete('/:id',authenticateToken,checkLoggedOut, (req, res) => {
         

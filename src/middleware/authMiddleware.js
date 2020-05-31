@@ -9,7 +9,8 @@ const SECRET = 'Batman 1s C00l & N0t Superman';
 let authenticateToken = expressJwt({credentialsRequired: false,secret:SECRET});
     
 let checkLoggedOut = (req,res,next) => {
-    UserAuth.findOne({user:req.user.uuid})
+    
+    UserAuth.findOne({accessToken:req.get('Authorization').split(' ')[1]})
     .then(user => {
         if(user.logoutAt){
             const error = new Error()
@@ -19,6 +20,13 @@ let checkLoggedOut = (req,res,next) => {
         }else{
             next();
         }
+    })
+    .catch(err =>{
+        console.log(err)
+        if(!err.statusCode){
+            err.statusCode=500
+        }
+        next(err)
     })
 }
 
